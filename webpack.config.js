@@ -4,38 +4,51 @@ const path = require('path');
 
 module.exports = {
     // 入口文件名称
-    entry: './src/index.js',
+    entry: './src/index.jsx',
     // 输出文件名称
     output: {
         path: path.resolve(__dirname, './dist'),
         filename: 'bundle.js'
     },
     module: {
-    	rules: [
+        rules: [
             {
-                test: /\.js$/,
+                test: /\.js|jsx$/,
                 exclude: /(node_modules|bower_components)/,
                 use: {
-                  loader: 'babel-loader',
-                //   options: {
-                //     presets: ['@babel/preset-env']
-                //   }
+                    loader: 'babel-loader',
+                    //   options: {
+                    //     presets: ['react']
+                    //   }
                 }
-              },
-    		{ test: /\.css$/, use: [ { loader: 'style-loader' }, { loader: 'css-loader' } ]}
-    	]
+            },
+            {
+                test: /\.css|less$/,
+                use: [
+                    { loader: 'style-loader' },
+                    { loader: 'css-loader' },
+                    {
+                        loader: "less-loader",
+                        // options: {
+                        //     strictMath: true,
+                        //     noIeCompat: true
+                        // },
+                    }
+                ]
+            }
+        ]
     },
     plugins: [
         new webpack.optimize.UglifyJsPlugin(),
         new HtmlWebpackPlugin({
             title: 'Test App',
-            template: __dirname+'/src/index.html',
+            template: __dirname + '/src/index.html',
             filename: 'index.html',
         })
     ],
     // devServer: {
-        
-       
+
+
     //     hot: true,
     //     hotOnly: true,
     //     host: "0.0.0.0",

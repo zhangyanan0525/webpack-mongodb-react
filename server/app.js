@@ -7,53 +7,78 @@ const url = require("url");
 // const html = require("../index.html");
 const Koa = require('koa');
 const app = new Koa();
-const  serve = require("koa-static");
+// 注意require('koa-router')返回的是函数:
+const router = require('koa-router')();
+const serve = require("koa-static");
 const path = require('path');
 
-// app.use(async ctx => {
-//   ctx.body = 'Hello World';
-// });
+// add router middleware:
+app.use(router.routes());
 
-console.log(__dirname)
-
-app.use(serve(path.resolve(__dirname,'../dist/'),{ extensions: ['html']}));
+app.use(serve(path.resolve(__dirname, '../dist/'), { extensions: ['html'] }));
 
 app.listen(1111);
- 
-// var insertData = function(client, callback) {  
-//     //连接到表 site
-//     // db.createCollection("site", function(err, res) {
-//     //   if (err) throw err;
-//     //   console.log("创建集合!");
-//     // });
-//     console.log(client.db)
-//     var collection = client.db(dbName).collection('site');
-//     //插入数据
-//     var data = [{"name":"张三","sex":"boy"},{"name":"张美美","sex":"girl"}];
-//     collection.insert(data, function(err, result) { 
-//         if(err)
-//         {
-//             console.log('Error:'+ err);
-//             return;
-//         }     
-//         callback(result);
-//     });
-// }
- 
-// MongoClient.connect(DB_CONN_STR, function(err, client) {
-//     console.log("连接成功！");
-//     insertData(client, function(result) {
-//         console.log(result);
-//         client.close();
-//     });
-// });
 
-// const server = http.createServer(function(request,response){
-//     var pathname = url.parse(request.url).pathname;
-//     response.writeHead(200,{"Content-Type": "text/html"});
-//     response.writeHead(pat);
-//     response.write('../index.html');
-//     response.end();
-//     console.log(pathname)
-// })
-// server.listen(1111)
+MongoClient.connect(DB_CONN_STR, function (err, client) {
+    console.log("连接成功！");
+
+    router.get('/getAlldata', async (ctx, next) => {
+        let rspBody;
+        try {
+            rspBody = await getAlldata(client);
+        } catch (error) {
+            rspBody = error;
+        }
+        ctx.response.body = { data: rspBody }
+
+    });
+
+    // router.post('/adddata', async (ctx, next) => {
+    //     var userName = ctx.request.body.userName || '',
+    //         sex = ctx.request.body.sex || '',
+    //         age = ctx.request.body.age || '';
+    //     console.log(`signin with `, userName, sex, age);
+    //     var data = { "userName": userName, "sex": sex, "age": age };
+    //     let rspBody;
+    //     try {
+    //         rspBody = await addOnedata(client,data);
+    //     } catch (error) {
+    //         rspBody = error;
+    //     }
+    //     ctx.response.body = rspBody
+    // });
+
+});
+
+
+function getAlldata(client) {
+    return new Promise((resolve, reject) => {
+        var collection = client.db(dbName).collection('site');
+        collection.find().toArray(function (err, result) {
+            if (err) {
+                console.log('Error:' + err);
+                reject(err);
+                // return;
+            }
+            console.log(result);
+            client.close();
+            resolve(result)
+            // return result
+        });
+
+    })
+}
+
+// function addOnedata(client,data) {
+//     return new Promise((resolve, reject) => {
+//         var collection = client.db(dbName).collection('site');
+//         collection.insert(data, function (err, result) {
+//             if (err) {
+//                 console.log('Error:' + err);
+//                 return;
+//             }
+//             console.log('addOnedata',result)
+//             callback(result);
+//         });
+//     })
+// }
