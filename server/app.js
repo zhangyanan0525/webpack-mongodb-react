@@ -1,5 +1,7 @@
 
 var MongoClient = require('mongodb').MongoClient;
+var ObjectId = require('mongodb').ObjectId;
+console.log(ObjectId)
 var DB_CONN_STR = 'mongodb://localhost:27017';
 const dbName = 'mydb';
 const http = require("http");
@@ -9,11 +11,16 @@ const Koa = require('koa');
 const app = new Koa();
 // 注意require('koa-router')返回的是函数:
 const router = require('koa-router')();
+const bodyParser = require('koa-bodyparser');
 const serve = require("koa-static");
 const path = require('path');
 
 // add router middleware:
+
+app.use(bodyParser());
+
 app.use(router.routes());
+
 
 app.use(serve(path.resolve(__dirname, '../dist/'), { extensions: ['html'] }));
 
@@ -33,20 +40,33 @@ MongoClient.connect(DB_CONN_STR, function (err, client) {
 
     });
 
-    // router.post('/adddata', async (ctx, next) => {
-    //     var userName = ctx.request.body.userName || '',
-    //         sex = ctx.request.body.sex || '',
-    //         age = ctx.request.body.age || '';
-    //     console.log(`signin with `, userName, sex, age);
-    //     var data = { "userName": userName, "sex": sex, "age": age };
-    //     let rspBody;
-    //     try {
-    //         rspBody = await addOnedata(client,data);
-    //     } catch (error) {
-    //         rspBody = error;
-    //     }
-    //     ctx.response.body = rspBody
-    // });
+    router.post('/adddata', async (ctx, next) => {
+        console.log('ctx', ctx)
+        var userName = ctx.request.body.userName || '',
+            sex = ctx.request.body.sex || '',
+            age = ctx.request.body.age || '';
+        var data = { "userName": userName, "sex": sex, "age": age };
+        let rspBody;
+        try {
+            rspBody = await addOnedata(client, data);
+        } catch (error) {
+            rspBody = error;
+        }
+        ctx.response.body = rspBody
+    });
+
+    router.post('/deleteOnedata', async (ctx, next) => {
+        console.log('ctx', ctx)
+        var id = ctx.request.body.id || '';
+        let rspBody;
+        let data={ _id: ObjectId(id) };
+        try {
+            rspBody = await deleteOnedata(client, data);
+        } catch (error) {
+            rspBody = error;
+        }
+        ctx.response.body = rspBody
+    });
 
 });
 
@@ -58,27 +78,39 @@ function getAlldata(client) {
             if (err) {
                 console.log('Error:' + err);
                 reject(err);
-                // return;
             }
             console.log(result);
-            client.close();
             resolve(result)
-            // return result
         });
 
     })
 }
 
-// function addOnedata(client,data) {
-//     return new Promise((resolve, reject) => {
-//         var collection = client.db(dbName).collection('site');
-//         collection.insert(data, function (err, result) {
-//             if (err) {
-//                 console.log('Error:' + err);
-//                 return;
-//             }
-//             console.log('addOnedata',result)
-//             callback(result);
-//         });
-//     })
-// }
+function addOnedata(client, data) {
+    return new Promise((resolve, reject) => {
+        var collection = client.db(dbName).collection('site');
+        collection.insert(data, function (err, result) {
+            if (err) {
+                console.log('Error:' + err);
+                reject(err);
+            }
+            console.log(result);
+            resolve({ status: 'success' })
+        });
+    })
+}
+
+function deleteOnedata(client, data) {
+    return new Promise((resolve, reject) => {
+        var collection = client.db(dbName).collection('site');
+        console.log('deleteOnedata',data)
+        collection.remove(data, function (err, result) {
+            if (err) {
+                console.log('Error:' + err);
+                reject(err);
+            }
+            console.log(result);
+            resolve({ status: 'success' })
+        });
+    })
+}
