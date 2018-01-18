@@ -57,9 +57,9 @@ MongoClient.connect(DB_CONN_STR, function (err, client) {
 
     router.post('/deleteOnedata', async (ctx, next) => {
         console.log('ctx', ctx)
-        var id = ctx.request.body.id || '';
+        var _id = ctx.request.body._id || '';
         let rspBody;
-        let data={ _id: ObjectId(id) };
+        let data = { _id: ObjectId(_id) };
         try {
             rspBody = await deleteOnedata(client, data);
         } catch (error) {
@@ -68,6 +68,23 @@ MongoClient.connect(DB_CONN_STR, function (err, client) {
         ctx.response.body = rspBody
     });
 
+
+    router.post('/updateOnedata', async (ctx, next) => {
+        console.log('ctx', ctx)
+        var _id = ctx.request.body._id || '';
+        let rspBody;
+        let term = { _id: ObjectId(_id) };
+        var userName = ctx.request.body.userName || '',
+            sex = ctx.request.body.sex || '',
+            age = ctx.request.body.age || '';
+        var data = { "userName": userName, "sex": sex, "age": age };
+        try {
+            rspBody = await updateOnedata(client, term, data);
+        } catch (error) {
+            rspBody = error;
+        }
+        ctx.response.body = rspBody
+    });
 });
 
 
@@ -103,8 +120,23 @@ function addOnedata(client, data) {
 function deleteOnedata(client, data) {
     return new Promise((resolve, reject) => {
         var collection = client.db(dbName).collection('site');
-        console.log('deleteOnedata',data)
+        console.log('deleteOnedata', data)
         collection.remove(data, function (err, result) {
+            if (err) {
+                console.log('Error:' + err);
+                reject(err);
+            }
+            console.log(result);
+            resolve({ status: 'success' })
+        });
+    })
+}
+
+function updateOnedata(client, term, data) {
+    return new Promise((resolve, reject) => {
+        var collection = client.db(dbName).collection('site');
+        console.log('updateOnedata', term, data)
+        collection.update(term, data, function (err, result) {
             if (err) {
                 console.log('Error:' + err);
                 reject(err);

@@ -1,6 +1,7 @@
 import { Form, Icon, Input, Button, Table } from 'antd';
 import React from 'react';
 import axios from 'axios';
+import _ from 'lodash';
 
 const FormItem = Form.Item;
 
@@ -11,8 +12,13 @@ function hasErrors(fieldsError) {
 class NameINput extends React.Component {
     state = {
         data: [],
-        // editStatus:true,
-        // editId:'',
+        editStatus: true,
+        editId: '',
+        editOneData: {
+            'userName': '',
+            'sex': '',
+            'age': ''
+        }
     }
 
     componentDidMount() {
@@ -23,9 +29,14 @@ class NameINput extends React.Component {
     getAlldata = () => {
         axios.get('/getAlldata')
             .then((e) => {
-                console.log(e.data.data);
+
+                const data = e.data.data.map((item) => {
+                    const temp = { ...item }
+                    temp.key = temp._id
+                    return temp
+                })
                 this.setState({
-                    data: e.data.data
+                    data,
                 })
             })
             .catch((error) => {
@@ -33,11 +44,10 @@ class NameINput extends React.Component {
             });
     }
 
-    deleteOnedata = (id) => {
+    deleteOnedata = (_id) => {
         axios.post('/deleteOnedata', {
-            id: id
+            _id,
         }).then((response) => {
-            console.log(response);
             this.getAlldata();
         }).catch((error) => {
             console.log(error);
@@ -48,7 +58,6 @@ class NameINput extends React.Component {
         e.preventDefault();
         this.props.form.validateFields((err, values) => {
             if (!err) {
-                console.log('Received values of form: ', values);
                 axios.post('/adddata', {
                     userName: values.userName,
                     sex: values.sex,
@@ -57,7 +66,6 @@ class NameINput extends React.Component {
                     .then((response) => {
                         this.props.form.resetFields();
                         this.getAlldata();
-                        console.log(response);
                     })
                     .catch((error) => {
                         console.log(error);
@@ -66,34 +74,120 @@ class NameINput extends React.Component {
         });
     }
 
-    updateOnedata=(id)=>{
-        // this.setState({
-        //     editStatus:true,
-        //     editId:id,
-        // })
+    updateOnedata = (id) => {
+        const { data } = this.state;
+        const editOneData = _.cloneDeep(data.filter((item) => {
+            return item._id === id
+        })[0])
+        this.setState({
+            editStatus: true,
+            editId: id,
+            editOneData,
+        })
+    }
+
+
+    editSubmit = (id) => {
+        const { editOneData } = this.state;
+        axios.post('/updateOnedata',
+            editOneData)
+            .then((response) => {
+                this.props.form.resetFields();
+                this.getAlldata();
+                this.setState({
+                    editStatus: false,
+                    editId: '',
+                    editOneData: {
+                        'userName': '',
+                        'sex': '',
+                        'age': ''
+                    }
+                })
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+
+    }
+
+    editCancle = (id) => {
+        this.setState({
+            editStatus: false,
+            editId: '',
+            editOneData: {
+                'userName': '',
+                'sex': '',
+                'age': ''
+            }
+        })
+    }
+
+    editChange = (key, value) => {
+        const { data, editStatus, editId } = this.state;
+        const editOneData = _.cloneDeep(data.filter((item) => {
+            return item._id === editId
+        })[0])
+        editOneData[key] = value;
+        this.setState({
+            editOneData,
+        })
     }
 
     render() {
-        const { data } = this.state;
+        const { data, editStatus, editId, editOneData } = this.state;
         const { getFieldDecorator, getFieldsError, getFieldError, isFieldTouched } = this.props.form;
 
         const columns = [{
             title: 'userName',
             dataIndex: 'userName',
             key: 'userName',
+            render: (text, record) => {
+                if (record._id === editId) {
+                    return <Input
+                        onChange={(e) => { this.editChange('userName', e.target.value) }}
+                        value={editOneData.userName}
+                    />
+                }
+                return text
+            }
         }, {
             title: 'sex',
             dataIndex: 'sex',
             key: 'sex',
+            render: (text, record) => {
+                if (record._id === editId) {
+                    return <Input
+                        onChange={(e) => { this.editChange('sex', e.target.value) }}
+                        value={editOneData.sex}
+                    />
+                }
+                return text
+            }
         }, {
             title: 'age',
             dataIndex: 'age',
             key: 'age',
+            render: (text, record) => {
+                if (record._id === editId) {
+                    return <Input
+                        onChange={(e) => { this.editChange('age', e.target.value) }}
+                        value={editOneData.age}
+                    />
+                }
+                return text
+            }
         }, {
             title: 'Action',
             key: 'action',
             render: (text, record) => {
-                console.log(record)
+                if (record._id === editId) {
+                    return (
+                        <div>
+                            <a href="#" onClick={() => { this.editSubmit(record._id) }}>确定</a>
+                            <a href="#" onClick={() => { this.editCancle(record._id) }}>取消</a>
+                        </div>
+                    )
+                }
                 return (
                     <div>
                         <a href="#" onClick={() => { this.deleteOnedata(record._id) }}>删除</a>
