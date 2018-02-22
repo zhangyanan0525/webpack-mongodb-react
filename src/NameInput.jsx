@@ -247,6 +247,7 @@ class NameINput extends React.Component {
                     columns={columns}
                     dataSource={data}
                 />
+                <div>啦啦啦</div>
             </div>
         );
     }

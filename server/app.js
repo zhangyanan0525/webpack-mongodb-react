@@ -22,7 +22,9 @@ app.use(bodyParser());
 app.use(router.routes());
 
 
-app.use(serve(path.resolve(__dirname, '../dist/'), { extensions: ['html'] }));
+// app.use(serve(path.resolve(__dirname, '../dist/'), { extensions: ['html'] }));
+console.log('process.cwd()', process.cwd())
+app.use(serve(path.join(process.cwd(), './dist/')))
 
 app.listen(1111);
 
@@ -74,10 +76,12 @@ MongoClient.connect(DB_CONN_STR, function (err, client) {
         var _id = ctx.request.body._id || '';
         let rspBody;
         let term = { _id: ObjectId(_id) };
-        var userName = ctx.request.body.userName || '',
-            sex = ctx.request.body.sex || '',
-            age = ctx.request.body.age || '';
-        var data = { "userName": userName, "sex": sex, "age": age };
+        // var userName = ctx.request.body.userName || '',
+        //     sex = ctx.request.body.sex || '',
+        //     age = ctx.request.body.age || '';
+        // const { userName, sex, age } = ctx.request.body;
+        // var data = { "userName": userName, "sex": sex, "age": age };
+        const data = { ...ctx.request.body }
         try {
             rspBody = await updateOnedata(client, term, data);
         } catch (error) {
@@ -85,6 +89,7 @@ MongoClient.connect(DB_CONN_STR, function (err, client) {
         }
         ctx.response.body = rspBody
     });
+
 });
 
 

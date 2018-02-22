@@ -16,3 +16,8 @@ ReactDOM.render(
   <NameInput />,
   document.getElementById('container')
 );
+
+
+if (module.hot) {
+  module.hot.accept()
+}
