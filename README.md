@@ -1,7 +1,9 @@
 # webpack-mongodb-react
 
 ## 运行项目
-webpack src/index.js
+npm run debug:client
+
+npm run debug:server
 
 
-node server/app.js
+
